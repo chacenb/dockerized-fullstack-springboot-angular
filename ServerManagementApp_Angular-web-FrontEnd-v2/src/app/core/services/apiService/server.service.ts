@@ -4,12 +4,13 @@ import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap, retry } from 'rxjs/operators';
 import * as mod from '../../models/models';
+import {environment} from "../../../../environments/environment";
 
 @Injectable({
   providedIn: 'root'
 })
 export class ServerService {
-  private readonly apiUrl: string = 'http://localhost:8080/api/v2/server';
+  private readonly apiUrl: string = environment.apiUrl;
 
   constructor(
     private http: HttpClient,
@@ -19,7 +20,7 @@ export class ServerService {
     retry(3),
     tap((data) => { console.log('[API] > get_all_servers > tap :', data); }),
     catchError(this.handleError),
-    
+
   );
 
   get_server_by_id$ = (id: number) => this.http.get<mod.CustomResponse>(`${this.apiUrl}/get/${id}`).pipe(
@@ -58,7 +59,7 @@ export class ServerService {
   */
   filter_by_status$ = (status: mod.Status, response: mod.CustomResponse) => new Observable<mod.CustomResponse>(
 
-    /*  Observables should define a subscriber function that is executed when a consumer calls the subscribe() method. 
+    /*  Observables should define a subscriber function that is executed when a consumer calls the subscribe() method.
      * The subscriber function defines how to obtain/generate values to be published to the consumer.*/
     (subscriber) => {
 
