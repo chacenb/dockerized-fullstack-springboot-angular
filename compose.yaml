@@ -1,0 +1,34 @@
+# Docker Compose reference guide at > https://docs.docker.com/go/compose-spec-reference/
+
+services:
+  postgres_db_container:
+    image: postgres:17
+    container_name: chacePostgres17
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgre
+      # POSTGRES_USER: postgres # optional
+      # POSTGRES_DB: mydb     # optional
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - 2345:5432
+
+  backend:
+    build:
+      context: ./serverManagement
+    ports:
+      - 8080:8080
+    depends_on: # `depends_on` tells Docker Compose to start the database before your application.
+      - postgres_db_container
+
+  frontend:
+    build:
+      context: ./ServerManagementApp_Angular-web-FrontEnd-v2
+    ports:
+      - 8008:80
+    depends_on: # `depends_on` tells Docker Compose to start the backend before the frontend.
+      - backend
+
+volumes:
+  pgdata: # The `db-data` volume persists the database data between container restarts.

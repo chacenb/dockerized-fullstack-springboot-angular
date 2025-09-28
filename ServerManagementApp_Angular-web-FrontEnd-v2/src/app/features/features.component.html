@@ -1,0 +1,286 @@
+<div class="row"><app-alert></app-alert></div>
+<div class="row mt-5">
+    <div class="card col-md-9 mx-auto ">
+        <div class="card-header hh">
+            <div>
+                <h5>Server management</h5>
+            </div>
+
+            <!-- top btns -->
+            <div class="btnSpacing">
+                <div>
+                    <!-- <select class="form-select" [(ngModel)]="filterStatus"> using custom pipe  : WORKING 100% -->
+                    <select class="form-select" [(ngModel)]="filterStatus" (ngModelChange)="filterServers($event)">
+                        <!-- using filter observable : WORKING 100% -->
+                        <!-- <select class="form-select" (change)="filterServers($event)"> -->
+                        <option value="ALL" selected>ALL</option>
+                        <option *ngFor="let item of StatusesArray" [ngValue]="item">
+                            {{(item == 'SERVER_DOWN') ? 'SERVER DOWN' : 'SERVER UP'}}
+                        </option>
+                    </select>
+                </div>
+
+                <button #addNewServerBtn type="button" class="btn btn-primary ml-2" data-bs-toggle="modal"
+                    data-bs-target="#addNewServerModal"><i class="fa-solid fa-plus"></i>
+                    &nbsp;New server
+                </button>
+
+                <div class="dropdown">
+                    <a href="#" class="ml-2  dropdown-toggle" id="printFormats" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="fas fa-print pt-2 h4"></i>
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="printFormats">
+                        <li><a class="dropdown-item" href="#" (click)="exportToPDF()">PDF</a></li>
+                        <li><a class="dropdown-item" href="#" (click)="exportToEXCEL()">EXCEL</a></li>
+                        <li><a class="dropdown-item" href="#" (click)="exportToCSV()">CSV</a></li>
+                        <li><a class="dropdown-item">-----</a></li>
+                        <li><a class="dropdown-item" href="#" (click)="browserPrint()">default</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-body text-center mt-3">
+
+            <!-- global container -->
+            <ng-container *ngIf="(appState$ | async) as appState" [ngSwitch]="appState.dataState">
+
+                <!-- loading state container -->
+                <ng-container *ngSwitchCase="dataStates.LOADING_STATE">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <!-- loaded state container -->
+                <ng-container *ngSwitchCase="dataStates.LOADED_STATE">
+
+                    <!-- {{appState.appData.data.servers | json}} -->
+                    <ng-container *ngIf="appState.appData.data.servers.length > 0 ;else noserverinDB">
+                        <table class="table" id="serversDataTable" #serversDataTable>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Id</th>
+                                    <th scope="col">Image</th>
+                                    <th scope="col">Ip Address</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Memory</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Ping</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- <tr *ngFor="let server of appState.appData.data.servers | filterByStatus:filterStatus; let i = index"> -->
+                                <tr *ngFor="let server of appState.appData.data.servers ; let i = index">
+                                    <th scope="row">#{{server.id}} </th>
+                                    <td> <img [src]="server.imageUrl" [alt]="server.name" width="30" height="30"> </td>
+                                    <td>{{server.ipAddress}}</td>
+                                    <td>{{server.name}}</td>
+                                    <td>{{server.memory}}</td>
+                                    <td>{{server.type}}</td>
+                                    <td>
+                                        <span class="badge"
+                                            [ngClass]="[server.status == Statuses.SERVER_DOWN ? 'bg-danger': 'bg-success ']">
+                                            {{(server.status===Statuses.SERVER_DOWN)?'SERVER DOWN': 'SERVER UP'}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a *ngIf="(pinging$ | async) !== server.ipAddress" href="javascript:void(0)"
+                                            (click)="pingServer(server.ipAddress)">
+                                            <i class="fa-solid fa-satellite-dish"></i>
+                                        </a>
+                                        <div *ngIf="(pinging$ | async) == server.ipAddress" class="spinner-grow"
+                                            role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <a href="javascript:void(0)"><i role="button" class="fas fa-pen px-2"
+                                                    (click)="onEditServer(server)"></i></a>
+                                            <span class="d-none" #toggleUpdatePanel data-bs-toggle="offcanvas"
+                                                data-bs-target="#offcanvasRight" aria-controls="offcanvasRight"></span>
+                                            <i role="button" class="fa-solid fa-trash text-danger px-2"
+                                                (click)="deleteServer(server)"></i>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </ng-container>
+
+                    <ng-template #noserverinDB>
+                        <div class="alert alert-info d-flex items-center gap-3" role="alert">
+                            <div><i class="fa-solid fa-circle-info"></i></div>
+                            <div>Aucun serveur en base, veuillez <a href="javascript:void(0)"
+                                    (click)="addNewServerBtn.click()">rajouter un serveur</a> pour commencer</div>
+                        </div>
+                    </ng-template>
+
+                </ng-container>
+
+                <!-- error state container -->
+                <ng-container *ngSwitchCase="dataStates.ERROR_STATE">
+                    <div class="alert alert-danger d-flex items-center gap-3" role="alert">
+                        <div><i class="fa-solid fa-triangle-exclamation"></i> </div>
+                        <div>Erreur [0] lors de la récupération des informations</div>
+                    </div>
+                </ng-container>
+
+                <!-- other state container -->
+                <ng-container *ngSwitchDefault>STATE UNKNOWN</ng-container>
+
+
+            </ng-container>
+        </div>
+    </div>
+</div>
+
+<!-- What have I implemented in this Project -->
+<div class="row mt-5">
+    <div class="col-md-9 mx-auto ">
+        <div class="">
+            <h5>WHAT IS IMPLEMENTED IN THIS PROJECT ?</h5>
+        </div>
+        <hr>
+        <ul class="list-group mt-3">
+            <li class="list-group-item" *ngFor="let func of whatIsImplementedInThisProject.functionnalities">
+                <span style="font-weight: 500;">{{func.title}} </span> : {{func.description}}
+            </li>
+        </ul>
+    </div>
+</div>
+
+
+<!-- Modal for adding new servers -->
+<div class="modal fade" id="addNewServerModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Add new server</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- form body -->
+            <div class="modal-body" [formGroup]="serverForm">
+                <div class="mb-3"
+                    [class.g_validateInput]="(serverForm.touched || ipAddress.touched) && ipAddress.invalid">
+                    <label for="serverIPAddress" class="form-label">IP Address</label>
+                    <input type="text" formControlName='ipAddress' class="form-control" id="serverIPAddress"
+                        placeholder="192.168.2.130">
+                </div>
+
+                <div class="mb-3" [class.g_validateInput]="(serverForm.touched || name.touched) && name.invalid">
+                    <label for="serverName" class="form-label">Server name</label>
+                    <input type="text" formControlName='name' class="form-control" id="serverName"
+                        placeholder="File Server #2">
+                </div>
+
+                <div class="row">
+                    <div class="mb-3  col-md-6"
+                        [class.g_validateInput]="(serverForm.touched || memory.touched) && memory.invalid">
+                        <label for="servermemory" class="form-label">Server memory size</label>
+                        <input type="text" formControlName='memory' class="form-control" id="servermemory"
+                            placeholder="32 GB">
+                    </div>
+
+                    <div class="mb-3  col-md-6"
+                        [class.g_validateInput]="(serverForm.touched || type.touched) && type.invalid">
+                        <label for="servertype" class="form-label">Server type </label>
+                        <input type="text" formControlName='type' class="form-control" id="servertype"
+                            placeholder="Ubuntu server">
+                    </div>
+
+                </div>
+
+
+                <div class="mb-3" [class.g_validateInput]="(serverForm.touched || status.touched) && status.invalid">
+                    <label for="serverstatus" class="form-label">Server status</label>
+                    <select class="form-select" id="serverstatus"
+                        formControlName='status'><!-- using custom pipe  : WORKING 100% -->
+                        <option [ngValue]="null">-- select status --</option>
+                        <option *ngFor="let item of StatusesArray" [ngValue]="item">{{(item == 'SERVER_DOWN') ? 'SERVER
+                            DOWN' : 'SERVER UP'}}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" #closeModalButton class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" (click)="addNewServer()"
+                    [ngClass]="{'disabled': serverForm.invalid || (savingServer$ | async) }">
+                    <div *ngIf="(savingServer$ | async) ;else notSaving">
+                        <span class="spinner-border spinner-border-sm" role="status"></span> &nbsp;
+                        <span class="">Saving server...</span>
+                    </div>
+                    <ng-template #notSaving>Save server</ng-template>
+
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Right slider for updating servers -->
+<div class="offcanvas offcanvas-end w-50" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel"
+    data-bs-scroll="true">
+    <div class=" shadow rightSliderHeader">
+        <div class="close_title">
+            <button type="button" class="btn-close text-reset d-inline" data-bs-dismiss="offcanvas"
+                aria-label="Close"></button> &nbsp; &nbsp;
+            <h5 id="offcanvasRightLabel" class="d-inline pt-2">Update server</h5>
+        </div>
+        <button type="button" class="btn btn-primary" (click)="updateServer()"
+            [ngClass]="{'disabled': serverForm.invalid || (updatingServer$ | async) }">
+            <ng-container *ngIf="(updatingServer$ | async) ; else notUpdating">
+                <span class="spinner-border spinner-border-sm" role="status"></span> &nbsp;
+                <span class="">Updating ...</span>
+            </ng-container>
+            <ng-template #notUpdating>Update</ng-template>
+        </button>
+    </div>
+    <div class="offcanvas-body" [formGroup]="serverForm">
+        <div class="mb-3" [class.g_validateInput]="(serverForm.touched || ipAddress.touched) && ipAddress.invalid">
+            <label for="serverIPAddress" class="form-label">IP Address</label>
+            <input type="text" formControlName='ipAddress' class="form-control" id="serverIPAddress"
+                placeholder="192.168.2.130">
+        </div>
+
+        <div class="mb-3" [class.g_validateInput]="(serverForm.touched || name.touched) && name.invalid">
+            <label for="serverName" class="form-label">Server name</label>
+            <input type="text" formControlName='name' class="form-control" id="serverName" placeholder="File Server #2">
+        </div>
+
+        <div class="row">
+            <div class="mb-3  col-md-6"
+                [class.g_validateInput]="(serverForm.touched || memory.touched) && memory.invalid">
+                <label for="servermemory" class="form-label">Server memory size</label>
+                <input type="text" formControlName='memory' class="form-control" id="servermemory" placeholder="32 GB">
+            </div>
+
+            <div class="mb-3  col-md-6" [class.g_validateInput]="(serverForm.touched || type.touched) && type.invalid">
+                <label for="servertype" class="form-label">Server type </label>
+                <input type="text" formControlName='type' class="form-control" id="servertype"
+                    placeholder="Ubuntu server">
+            </div>
+
+        </div>
+
+
+        <div class="mb-3" [class.g_validateInput]="(serverForm.touched || status.touched) && status.invalid">
+            <label for="serverstatus" class="form-label">Server status</label>
+            <select class="form-select" id="serverstatus"
+                formControlName='status'><!-- using custom pipe  : WORKING 100% -->
+                <option [ngValue]="null">-- select status --</option>
+                <option *ngFor="let item of StatusesArray" [ngValue]="item">{{(item == 'SERVER_DOWN') ? 'SERVER DOWN' :
+                    'SERVER UP'}}</option>
+            </select>
+        </div>
+    </div>
+</div>

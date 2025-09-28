@@ -1,0 +1,50 @@
+.pageContent {
+    max-width: 70%;
+    min-height: 100vh;
+    padding: auto;
+
+}
+
+.borderR {
+    border: 3px solid red;
+
+}
+
+.hh {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btnSpacing {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+#serversDataTable {
+    // width: 8.8in;
+    // margin: auto;
+    // height: 7in;
+    // margin: 27mm 16mm 27mm 16mm;
+    // max-width: 842px;
+    // height: 595px;
+}
+
+.offcanvas{
+    // width:40% !important;
+} 
+
+.rightSliderHeader{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem 0.6rem 1rem;
+}
+
+.rightSliderHeader .close_title{
+    display: flex;
+    align-items: center;
+    // justify-content: space-between;
+    // padding: 0.6rem 1rem 0.6rem 1rem;
+}

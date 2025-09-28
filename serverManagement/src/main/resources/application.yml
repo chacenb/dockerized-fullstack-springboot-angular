@@ -1,0 +1,51 @@
+#-----------------------------------------------------------
+# timezones ----------------------------
+#-----------------------------------------------------------
+application:
+  timezone: GMT+01:00
+
+#-----------------------------------------------------------
+# security ----------------------------
+#-----------------------------------------------------------
+security:
+  jwt:
+    secret-key: applicationJwtSecretKeyStrongEnoughNotToBeGuessedByAnyoneHaha
+
+spring:
+  datasource:
+    # url: jdbc:postgresql://localhost:5432/serverdb  
+    # url: jdbc:mysql://localhost:3306/serverdb
+    url: jdbc:postgresql://postgres_db_container:5432/serverdb  # uses the container db
+    username: postgres
+    password: postgre
+#    url:  @SPRING_DATASOURCE_URL@
+#    username: @SPRING_DATASOURCE_USERNAME@
+#    password: @SPRING_DATASOURCE_PASSWORD@
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect #        dialect: org.hibernate.dialect.MySQL8Dialect
+        default_schema: server  # used by postgreSQL to determine the default schema, Else it will use the public one
+        format_sql: true
+        #-------------------------------
+        # generates SQL script file (create.sql) at project.basedir at project startup, !!! BUT !!!  PREVENTS AUTO CREATION OF OBJECTS IN THE DB
+        #      jakarta:
+        #        persistence:
+        #          schema-generation:
+        #            scripts:
+        #              action: create
+        #              create-target: create.sql
+        #              create-source: metadata
+        # END used to generate DB scripts
+      #-------------------------------
+    open-in-view: false
+
+# set logging level of core loggers (tomcat, springBoot itself, hibernate) ONLY to debug an upwards
+#debug: true
+
+# set the whole application root log level
+#logging:
+#  level:
+#    root: INFO # TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF

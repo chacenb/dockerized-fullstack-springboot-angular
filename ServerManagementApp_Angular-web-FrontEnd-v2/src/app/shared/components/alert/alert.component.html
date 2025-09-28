@@ -1,0 +1,17 @@
+<div *ngIf="(triggerAlert$ | async) as alert" class="alert-container">
+    <div class="rounded alertContent" *ngIf="(display$ | async)" [ngClass]="['alert-'+alert.type]" role="alert">
+        {{alert.message}}
+    </div>
+</div>
+
+<!-- types of alert 
+---------------------
+alert-primary
+alert-secondary
+alert-success
+alert-danger
+alert-warning
+alert-info
+alert-light
+alert-dark  
+------------------->
