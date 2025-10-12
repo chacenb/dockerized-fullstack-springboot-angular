@@ -23,7 +23,7 @@ services:
 
   server_management_front:
     build:
-      context: ./ServerManagementApp_Angular-web-FrontEnd-v2
+      context: ./ServerManagementFront
     ports:
       - 8008:80
     depends_on: # `depends_on` tells Docker Compose to start the server_management_back before the server_management_front.
